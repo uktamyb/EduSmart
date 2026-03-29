@@ -134,7 +134,8 @@ export default function Subjects() {
         <p className="text-gray-400">Hali fanlar qo'shilmagan.</p>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[400px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
@@ -169,6 +170,7 @@ export default function Subjects() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -229,7 +231,7 @@ function Modal({
   children: React.ReactNode
 }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">{title}</h2>

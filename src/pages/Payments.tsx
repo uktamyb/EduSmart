@@ -306,7 +306,8 @@ function PaymentList({
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[520px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
@@ -348,6 +349,7 @@ function PaymentList({
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -376,7 +378,8 @@ function PaymentHistory({
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[480px]">
         <thead className="bg-gray-50 border-b">
           <tr>
             <th className="text-left px-4 py-3 text-gray-600 font-medium">Oy</th>
@@ -400,6 +403,7 @@ function PaymentHistory({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

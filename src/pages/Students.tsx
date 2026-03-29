@@ -179,7 +179,8 @@ export default function Students() {
         <p className="text-gray-400">Hali o'quvchilar qo'shilmagan.</p>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
@@ -216,6 +217,7 @@ export default function Students() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -281,7 +283,7 @@ function StudentFormFields({
 
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">O'quvchi ma'lumotlari</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-sm text-gray-600 mb-1">Ism familiya <span className="text-red-500">*</span></label>
           <input
@@ -327,7 +329,7 @@ function StudentFormFields({
 
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-1">Ota-ona ma'lumotlari</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-sm text-gray-600 mb-1">Ota-ona ismi</label>
           <input

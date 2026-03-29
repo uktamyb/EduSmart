@@ -125,7 +125,7 @@ export default function GroupDetail() {
       </div>
 
       {/* Group info */}
-      <div className="bg-white rounded-lg shadow p-5 mb-6 flex gap-8 text-sm">
+      <div className="bg-white rounded-lg shadow p-5 mb-6 flex flex-wrap gap-4 sm:gap-8 text-sm">
         <div>
           <span className="text-gray-400">Fan:</span>{' '}
           <span className="font-medium">{group.subjects?.name ?? '—'}</span>
@@ -146,7 +146,7 @@ export default function GroupDetail() {
         {available.length === 0 ? (
           <p className="text-gray-400 text-sm">Qo'shish uchun mavjud o'quvchi yo'q.</p>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <select
               value={selectedStudentId}
               onChange={(e) => setSelectedStudentId(e.target.value)}
@@ -180,7 +180,8 @@ export default function GroupDetail() {
         {enrolled.length === 0 ? (
           <p className="text-gray-400 text-sm p-5">Guruhda hali o'quvchi yo'q.</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[400px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
@@ -207,12 +208,13 @@ export default function GroupDetail() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
       {/* Remove confirmation */}
       {removeId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">Guruhdan chiqarish</h2>
             <p className="text-gray-600 text-sm mb-6">

@@ -263,7 +263,8 @@ function TakeAttendance({
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[360px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
@@ -295,6 +296,7 @@ function TakeAttendance({
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -323,7 +325,8 @@ function HistoryView({
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[360px]">
         <thead className="bg-gray-50 border-b">
           <tr>
             <th className="text-left px-4 py-3 text-gray-600 font-medium">Sana</th>
@@ -343,6 +346,7 @@ function HistoryView({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
