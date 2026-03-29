@@ -10,6 +10,7 @@ const navItems = [
   { to: '/attendance', label: 'Davomat' },
   { to: '/payments', label: "To'lovlar" },
   { to: '/grades', label: 'Baholar' },
+  { to: '/analytics', label: 'Tahlil' },
 ]
 
 interface Props {

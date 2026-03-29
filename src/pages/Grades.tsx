@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
+import { sendTelegramMessage } from '../lib/telegram'
 
 interface Group {
   id: string
   name: string
+  subjectName: string | null
 }
 
 interface Student {
   id: string
   full_name: string
+  parent_name: string | null
+  parent_telegram: string | null
 }
 
 interface GradeEntry {
@@ -58,12 +62,15 @@ export default function Grades() {
   async function fetchGroups(orgId: string) {
     const { data } = await supabase
       .from('groups')
-      .select('id, name')
+      .select('id, name, subjects(name)')
       .eq('org_id', orgId)
       .order('name')
     if (data) {
-      setGroups(data)
-      if (data.length > 0) setSelectedGroupId(data[0].id)
+      const mapped: Group[] = (data as unknown as { id: string; name: string; subjects: { name: string } | null }[]).map(
+        (g) => ({ id: g.id, name: g.name, subjectName: g.subjects?.name ?? null })
+      )
+      setGroups(mapped)
+      if (mapped.length > 0) setSelectedGroupId(mapped[0].id)
     }
   }
 
@@ -73,7 +80,7 @@ export default function Grades() {
 
     const { data: gsData } = await supabase
       .from('group_students')
-      .select('students(id, full_name)')
+      .select('students(id, full_name, parent_name, parent_telegram)')
       .eq('group_id', selectedGroupId)
 
     const studentList: Student[] = (gsData ?? [])
@@ -162,7 +169,18 @@ export default function Grades() {
       .from('grades')
       .upsert(records, { onConflict: 'student_id,group_id,date' })
 
-    if (!error) setSaved(true)
+    if (!error) {
+      setSaved(true)
+      const group = groups.find((g) => g.id === selectedGroupId)
+      const subjectName = group?.subjectName ?? ''
+      for (const s of students) {
+        const entry = gradeMap[s.id]
+        if (!entry?.grade || !s.parent_telegram) continue
+        const parentName = s.parent_name ?? 'Ota-ona'
+        const msg = `Hurmatli ${parentName}, ${s.full_name} ning bahosi: ${entry.grade}/100. ${subjectName} ${date}`
+        sendTelegramMessage(s.parent_telegram, msg)
+      }
+    }
     setSaving(false)
   }
 

@@ -13,6 +13,7 @@ import GroupDetail from './pages/GroupDetail'
 import Attendance from './pages/Attendance'
 import Payments from './pages/Payments'
 import Grades from './pages/Grades'
+import Analytics from './pages/Analytics'
 
 function AppRoutes() {
   useAuth()
@@ -91,6 +92,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout><Grades /></Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Layout><Analytics /></Layout>
           </ProtectedRoute>
         }
       />

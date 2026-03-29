@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
+import { sendTelegramMessage } from '../lib/telegram'
 
 interface Group {
   id: string
@@ -10,6 +11,8 @@ interface Group {
 interface Student {
   id: string
   full_name: string
+  parent_name: string | null
+  parent_telegram: string | null
 }
 
 interface HistoryRecord {
@@ -71,7 +74,7 @@ export default function Attendance() {
     // Students in group
     const { data: gsData } = await supabase
       .from('group_students')
-      .select('students(id, full_name)')
+      .select('students(id, full_name, parent_name, parent_telegram)')
       .eq('group_id', selectedGroupId)
 
     const studentList: Student[] = (gsData ?? [])
@@ -152,7 +155,21 @@ export default function Attendance() {
       .from('attendance')
       .upsert(records, { onConflict: 'group_id,student_id,date' })
 
-    if (!error) setSaved(true)
+    if (!error) {
+      setSaved(true)
+      // Send Telegram notifications
+      for (const s of students) {
+        const chatId = s.parent_telegram
+        if (!chatId) continue
+        const parentName = s.parent_name ?? 'Ota-ona'
+        const status = statusMap[s.id] ?? 'present'
+        const msg =
+          status === 'absent'
+            ? `Hurmatli ${parentName}, ${s.full_name} bugun darsga kelmadi. ${date}`
+            : `Hurmatli ${parentName}, ${s.full_name} bugun darsga keldi. ${date}`
+        sendTelegramMessage(chatId, msg)
+      }
+    }
     setSaving(false)
   }
 

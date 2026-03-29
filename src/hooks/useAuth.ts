@@ -20,14 +20,17 @@ async function loadUserProfile(
     return
   }
 
+  console.log('[useAuth] org_id:', profile.org_id)
+
   const { data: org, error: orgError } = await supabase
     .from('organizations')
-    .select('id, name')
+    .select('*')
     .eq('id', profile.org_id)
     .single()
 
-  console.log('[useAuth] org fetch:', { org, error: orgError })
-  setOrg(org ?? null)
+  console.log('[useAuth] org result:', org)
+  console.log('[useAuth] org error:', orgError)
+  setOrg(org ? { id: org.id, name: org.name } : null)
 }
 
 export function useAuth() {

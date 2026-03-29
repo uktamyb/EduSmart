@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
+import { sendTelegramMessage } from '../lib/telegram'
 
 interface Group {
   id: string
@@ -11,6 +12,8 @@ interface Group {
 interface Student {
   id: string
   full_name: string
+  parent_name: string | null
+  parent_telegram: string | null
 }
 
 interface PaymentEntry {
@@ -83,7 +86,7 @@ export default function Payments() {
 
     const { data: gsData } = await supabase
       .from('group_students')
-      .select('students(id, full_name)')
+      .select('students(id, full_name, parent_name, parent_telegram)')
       .eq('group_id', selectedGroupId)
 
     const studentList: Student[] = (gsData ?? [])
@@ -184,7 +187,16 @@ export default function Payments() {
       .from('payments')
       .upsert(records, { onConflict: 'student_id,group_id,month' })
 
-    if (!error) setSaved(true)
+    if (!error) {
+      setSaved(true)
+      for (const s of students) {
+        const entry = paymentMap[s.id]
+        if (entry?.status !== 'paid' || !s.parent_telegram) continue
+        const parentName = s.parent_name ?? 'Ota-ona'
+        const msg = `Hurmatli ${parentName}, ${s.full_name} ning ${month} oylik to'lovi qabul qilindi. Summa: ${entry.amount.toLocaleString()} so'm`
+        sendTelegramMessage(s.parent_telegram, msg)
+      }
+    }
     setSaving(false)
   }
 
