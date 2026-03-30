@@ -14,6 +14,10 @@ import Attendance from './pages/Attendance'
 import Payments from './pages/Payments'
 import Grades from './pages/Grades'
 import Analytics from './pages/Analytics'
+import SuperAdminRoute from './components/SuperAdminRoute'
+import SuperAdminLayout from './components/SuperAdminLayout'
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
+import OrgDetail from './pages/superadmin/OrgDetail'
 
 function AppRoutes() {
   useAuth()
@@ -102,6 +106,23 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout><Analytics /></Layout>
           </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/superadmin/dashboard"
+        element={
+          <SuperAdminRoute>
+            <SuperAdminLayout><SuperAdminDashboard /></SuperAdminLayout>
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/superadmin/orgs/:id"
+        element={
+          <SuperAdminRoute>
+            <SuperAdminLayout><OrgDetail /></SuperAdminLayout>
+          </SuperAdminRoute>
         }
       />
 

@@ -5,19 +5,23 @@ import { useAuthStore } from '../store/authStore'
 
 async function loadUserProfile(
   userId: string,
-  setOrg: (org: { id: string; name: string } | null) => void
-) {
+  setOrg: (org: { id: string; name: string } | null) => void,
+  setRole: (role: string | null) => void
+): Promise<string | null> {
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('org_id')
+    .select('org_id, role')
     .eq('id', userId)
     .single()
 
   console.log('[useAuth] loadUserProfile:', { profile, error: profileError })
 
+  const role = profile?.role ?? null
+  setRole(role)
+
   if (!profile?.org_id) {
     setOrg(null)
-    return
+    return role
   }
 
   console.log('[useAuth] org_id:', profile.org_id)
@@ -31,10 +35,11 @@ async function loadUserProfile(
   console.log('[useAuth] org result:', org)
   console.log('[useAuth] org error:', orgError)
   setOrg(org ? { id: org.id, name: org.name } : null)
+  return role
 }
 
 export function useAuth() {
-  const { setUser, setOrg, setLoading } = useAuthStore()
+  const { setUser, setOrg, setRole, setLoading } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -52,11 +57,12 @@ export function useAuth() {
         if (session?.user) {
           setUser(session.user)
 
-          // Defer supabase queries to avoid deadlock with the auth lock
-          // held by signInWithPassword / signUp during this callback.
           setTimeout(async () => {
             try {
-              await loadUserProfile(session.user!.id, setOrg)
+              const role = await loadUserProfile(session.user!.id, setOrg, setRole)
+              if (role === 'super_admin' && !window.location.pathname.startsWith('/superadmin')) {
+                navigate('/superadmin/dashboard')
+              }
             } catch (err) {
               console.error('[useAuth] loadUserProfile error:', err)
             } finally {
@@ -66,6 +72,7 @@ export function useAuth() {
         } else {
           setUser(null)
           setOrg(null)
+          setRole(null)
           setLoading(false)
 
           if (event === 'SIGNED_OUT') {
@@ -79,5 +86,5 @@ export function useAuth() {
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
-  }, [navigate, setLoading, setOrg, setUser])
+  }, [navigate, setLoading, setOrg, setRole, setUser])
 }
