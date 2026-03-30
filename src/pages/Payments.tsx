@@ -6,6 +6,7 @@ import { sendTelegramMessage } from '../lib/telegram'
 interface Group {
   id: string
   name: string
+  subjectName: string
   subjectPrice: number
 }
 
@@ -49,6 +50,8 @@ export default function Payments() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [sending, setSending] = useState<Set<string>>(new Set())
+  const [sendingAll, setSendingAll] = useState(false)
 
   useEffect(() => {
     const orgId = org?.id
@@ -67,13 +70,13 @@ export default function Payments() {
   async function fetchGroups(orgId: string) {
     const { data } = await supabase
       .from('groups')
-      .select('id, name, subjects(price)')
+      .select('id, name, subjects(name, price)')
       .eq('org_id', orgId)
       .order('name')
 
     if (data) {
-      const mapped: Group[] = (data as unknown as { id: string; name: string; subjects: { price: number } | null }[]).map(
-        (g) => ({ id: g.id, name: g.name, subjectPrice: g.subjects?.price ?? 0 })
+      const mapped: Group[] = (data as unknown as { id: string; name: string; subjects: { name: string; price: number } | null }[]).map(
+        (g) => ({ id: g.id, name: g.name, subjectName: g.subjects?.name ?? '', subjectPrice: g.subjects?.price ?? 0 })
       )
       setGroups(mapped)
       if (mapped.length > 0) setSelectedGroupId(mapped[0].id)
@@ -170,6 +173,30 @@ export default function Payments() {
     setSaved(false)
   }
 
+  function buildReminderMessage(student: Student, amount: number): string {
+    const group = groups.find((g) => g.id === selectedGroupId)
+    const parentName = student.parent_name ?? 'Ota-ona'
+    return `📚 Hurmatli ${parentName},\n\n${student.full_name} ning ${group?.name ?? ''} guruhidagi ${group?.subjectName ?? ''} fani uchun ${month} oylik to'lov amalga oshirilmagan.\n\n💰 To'lov miqdori: ${amount.toLocaleString()} so'm\n\nIltimos, to'lovni amalga oshiring. Savollar bo'lsa, o'quv markaz bilan bog'laning.\n\n🏫 ${org?.name ?? ''}`
+  }
+
+  async function sendReminder(student: Student) {
+    if (!student.parent_telegram) return
+    const entry = paymentMap[student.id]
+    if (!entry || entry.status === 'paid') return
+    setSending((prev) => new Set(prev).add(student.id))
+    await sendTelegramMessage(student.parent_telegram, buildReminderMessage(student, entry.amount))
+    setSending((prev) => { const s = new Set(prev); s.delete(student.id); return s })
+  }
+
+  async function sendAllReminders() {
+    setSendingAll(true)
+    const unpaid = students.filter(
+      (s) => paymentMap[s.id]?.status === 'unpaid' && s.parent_telegram
+    )
+    await Promise.all(unpaid.map((s) => sendTelegramMessage(s.parent_telegram!, buildReminderMessage(s, paymentMap[s.id].amount))))
+    setSendingAll(false)
+  }
+
   async function handleSave() {
     if (!selectedGroupId || students.length === 0) return
     setSaving(true)
@@ -264,12 +291,16 @@ export default function Payments() {
           loading={loadingStudents}
           saving={saving}
           saved={saved}
+          sending={sending}
+          sendingAll={sendingAll}
           paidCount={paidCount}
           unpaidCount={unpaidCount}
           totalPaid={totalPaid}
           onToggle={toggleStatus}
           onAmountChange={setAmount}
           onSave={handleSave}
+          onSendReminder={sendReminder}
+          onSendAllReminders={sendAllReminders}
         />
       ) : (
         <PaymentHistory history={history} loading={loadingHistory} />
@@ -284,53 +315,76 @@ function PaymentList({
   loading,
   saving,
   saved,
+  sending,
+  sendingAll,
   paidCount,
   unpaidCount,
   totalPaid,
   onToggle,
   onAmountChange,
   onSave,
+  onSendReminder,
+  onSendAllReminders,
 }: {
   students: Student[]
   paymentMap: Record<string, PaymentEntry>
   loading: boolean
   saving: boolean
   saved: boolean
+  sending: Set<string>
+  sendingAll: boolean
   paidCount: number
   unpaidCount: number
   totalPaid: number
   onToggle: (id: string) => void
   onAmountChange: (id: string, amount: number) => void
   onSave: () => void
+  onSendReminder: (student: Student) => void
+  onSendAllReminders: () => void
 }) {
   if (loading) return <p className="text-gray-400">Yuklanmoqda...</p>
   if (students.length === 0) return <p className="text-gray-400">Bu guruhda o'quvchi yo'q.</p>
 
+  const unpaidWithTelegram = students.filter(
+    (s) => paymentMap[s.id]?.status === 'unpaid' && s.parent_telegram
+  )
+
   return (
     <div>
-      {/* Summary */}
-      <div className="flex gap-4 mb-4">
+      {/* Summary + Barchaga eslatma */}
+      <div className="flex flex-wrap items-center gap-4 mb-4">
         <span className="text-sm text-green-600 font-medium">To'ladi: {paidCount}</span>
         <span className="text-sm text-red-500 font-medium">To'lamadi: {unpaidCount}</span>
         <span className="text-sm text-gray-500 font-medium">
           Jami: {totalPaid.toLocaleString()} so'm
         </span>
+        {unpaidWithTelegram.length > 0 && (
+          <button
+            onClick={onSendAllReminders}
+            disabled={sendingAll}
+            className="ml-auto bg-orange-500 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-orange-600 disabled:opacity-50"
+          >
+            {sendingAll ? 'Yuborilmoqda...' : `Barchaga eslatma (${unpaidWithTelegram.length})`}
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[520px]">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 text-gray-600 font-medium">#</th>
               <th className="text-left px-4 py-3 text-gray-600 font-medium">Ism familiya</th>
               <th className="text-left px-4 py-3 text-gray-600 font-medium">Miqdor (so'm)</th>
               <th className="text-center px-4 py-3 text-gray-600 font-medium">Holat</th>
+              <th className="text-center px-4 py-3 text-gray-600 font-medium">Eslatma</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {students.map((student, i) => {
               const entry = paymentMap[student.id] ?? { status: 'unpaid', amount: 0 }
+              const isSending = sending.has(student.id)
               return (
                 <tr key={student.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-400">{i + 1}</td>
@@ -355,6 +409,19 @@ function PaymentList({
                     >
                       {entry.status === 'paid' ? "To'ladi" : "To'lamadi"}
                     </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {entry.status === 'unpaid' && student.parent_telegram ? (
+                      <button
+                        onClick={() => onSendReminder(student)}
+                        disabled={isSending}
+                        className="px-3 py-1 rounded text-xs font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50"
+                      >
+                        {isSending ? '...' : 'Eslatma yuborish'}
+                      </button>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
                   </td>
                 </tr>
               )
