@@ -177,24 +177,14 @@ Quyidagilarni tahlil qiling:
 4. O'quvchilar ko'rsatkichlarini yaxshilash bo'yicha 3 ta amaliy tavsiya`
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY as string,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          messages: [{ role: 'user', content: prompt }],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       })
 
-      const json = await response.json()
-      const text = json.content?.[0]?.text ?? 'Tahlil olishda xatolik yuz berdi.'
-      setAiInsight(text)
+      const json = await response.json() as { insight?: string }
+      setAiInsight(json.insight ?? 'Tahlil olishda xatolik yuz berdi.')
     } catch (err) {
       console.error('[AI] error:', err)
       setAiInsight('Tahlil olishda xatolik yuz berdi.')
