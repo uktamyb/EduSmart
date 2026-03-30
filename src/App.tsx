@@ -18,6 +18,11 @@ import SuperAdminRoute from './components/SuperAdminRoute'
 import SuperAdminLayout from './components/SuperAdminLayout'
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
 import OrgDetail from './pages/superadmin/OrgDetail'
+import TeacherRoute from './components/TeacherRoute'
+import TeacherLayout from './components/TeacherLayout'
+import TeacherDashboard from './pages/teacher/TeacherDashboard'
+import TeacherAttendance from './pages/teacher/TeacherAttendance'
+import TeacherGrades from './pages/teacher/TeacherGrades'
 
 function AppRoutes() {
   useAuth()
@@ -125,6 +130,10 @@ function AppRoutes() {
           </SuperAdminRoute>
         }
       />
+
+      <Route path="/teacher/dashboard" element={<TeacherRoute><TeacherLayout><TeacherDashboard /></TeacherLayout></TeacherRoute>} />
+      <Route path="/teacher/attendance" element={<TeacherRoute><TeacherLayout><TeacherAttendance /></TeacherLayout></TeacherRoute>} />
+      <Route path="/teacher/grades" element={<TeacherRoute><TeacherLayout><TeacherGrades /></TeacherLayout></TeacherRoute>} />
 
       <Route path="*" element={<Navigate to="/signin" replace />} />
     </Routes>

@@ -6,11 +6,12 @@ import { useAuthStore } from '../store/authStore'
 async function loadUserProfile(
   userId: string,
   setOrg: (org: { id: string; name: string } | null) => void,
-  setRole: (role: string | null) => void
+  setRole: (role: string | null) => void,
+  setFullName: (name: string | null) => void
 ): Promise<string | null> {
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('org_id, role')
+    .select('org_id, role, full_name')
     .eq('id', userId)
     .single()
 
@@ -18,6 +19,7 @@ async function loadUserProfile(
 
   const role = profile?.role ?? null
   setRole(role)
+  setFullName(profile?.full_name ?? null)
 
   if (!profile?.org_id) {
     setOrg(null)
@@ -39,7 +41,7 @@ async function loadUserProfile(
 }
 
 export function useAuth() {
-  const { setUser, setOrg, setRole, setLoading } = useAuthStore()
+  const { setUser, setOrg, setRole, setFullName, setLoading } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -59,9 +61,12 @@ export function useAuth() {
 
           setTimeout(async () => {
             try {
-              const role = await loadUserProfile(session.user!.id, setOrg, setRole)
-              if (role === 'super_admin' && !window.location.pathname.startsWith('/superadmin')) {
+              const role = await loadUserProfile(session.user!.id, setOrg, setRole, setFullName)
+              const path = window.location.pathname
+              if (role === 'super_admin' && !path.startsWith('/superadmin')) {
                 navigate('/superadmin/dashboard')
+              } else if (role === 'teacher' && !path.startsWith('/teacher')) {
+                navigate('/teacher/dashboard')
               }
             } catch (err) {
               console.error('[useAuth] loadUserProfile error:', err)
@@ -73,6 +78,7 @@ export function useAuth() {
           setUser(null)
           setOrg(null)
           setRole(null)
+          setFullName(null)
           setLoading(false)
 
           if (event === 'SIGNED_OUT') {
@@ -86,5 +92,5 @@ export function useAuth() {
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
-  }, [navigate, setLoading, setOrg, setRole, setUser])
+  }, [navigate, setLoading, setOrg, setRole, setFullName, setUser])
 }
